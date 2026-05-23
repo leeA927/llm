@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能助手</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, sans-serif;
+            background: #343541;
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        .header {
+            background: #202123;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid #343541;
+        }
+        .header h1 {
+            color: #ec4a4a;
+            font-size: 18px;
+            font-weight: 600;
+        }
+        .status-bar {
+            display: flex;
+            gap: 15px;
+            font-size: 12px;
+            color: #aaa;
+        }
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #4CAF50;
+        }
+        .main-container {
+            flex: 1;
+            display: flex;
+            overflow: hidden;
+        }
+        .sidebar {
+            width: 280px;
+            background: #202123;
+            border-right: 1px solid #343541;
+            display: flex;
+            flex-direction: column;
+            padding: 10px;
+        }
+        .sidebar-section {
+            margin-bottom: 15px;
+        }
+        .sidebar-title {
+            color: #8b8b8b;
+            font-size: 11px;
+            text-transform: uppercase;
+            margin-bottom: 8px;
+            padding-left: 5px;
+        }
+        .tool-list {
+            list-style: none;
+        }
+        .tool-item {
+            color: #d1d1d1;
+            font-size: 13px;
+            padding: 6px 10px;
+            border-radius: 5px;
+            margin-bottom: 3px;
+            cursor: default;
+        }
+        .tool-item:hover {
+            background: #2d2d2d;
+        }
+        .chat-area {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            max-width: 900px;
+            margin: 0 auto;
+            width: 100%;
+        }
+        .messages {
+            flex: 1;
+            overflow-y: auto;
+            padding: 20px;
+        }
+        .message {
+            display: flex;
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .message.user {
+            flex-direction: row-reverse;
+        }
+        .message-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .message.assistant .message-avatar {
+            background: #10a37f;
+            color: white;
+        }
+        .message.user .message-avatar {
+            background: #5436da;
+            color: white;
+        }
+        .message-content {
+            max-width: 70%;
+            padding: 12px 16px;
+            border-radius: 15px;
+            line-height: 1.5;
+            white-space: pre-wrap;
+            word-break: break-word;
+        }
+        .message.assistant .message-content {
+            background: #444654;
+            color: #ececf1;
+            border-top-left-radius: 3px;
+            margin-left: 12px;
+        }
+        .message.user .message-content {
+            background: #5436da;
+            color: #ececf1;
+            border-top-right-radius: 3px;
+            margin-right: 12px;
+        }
+        .tool-badge {
+            display: inline-block;
+            background: #10a37f;
+            color: white;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            margin-top: 8px;
+        }
+        .input-area {
+            padding: 20px;
+            background: #343541;
+            border-top: 1px solid #444654;
+        }
+        .input-container {
+            display: flex;
+            gap: 10px;
+            max-width: 800px;
+            margin: 0 auto;
+        }
+        .input-box {
+            flex: 1;
+            background: #40414f;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 18px;
+            color: #ececf1;
+            font-size: 15px;
+            outline: none;
+            resize: none;
+        }
+        .input-box:focus {
+            box-shadow: 0 0 0 2px #10a37f;
+        }
+        .send-btn {
+            background: #10a37f;
+            border: none;
+            border-radius: 10px;
+            padding: 14px 24px;
+            color: white;
+            font-size: 15px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .send-btn:hover {
+            background: #0d8a6a;
+        }
+        .send-btn:disabled {
+            background: #555;
+            cursor: not-allowed;
+        }
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 10px;
+            max-width: 800px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .action-btn {
+            background: #40414f;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 8px 16px;
+            color: #aaa;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .action-btn:hover {
+            background: #4a4a5a;
+            color: #fff;
+        }
+        .session-info {
+            color: #8b8b8b;
+            font-size: 11px;
+            padding: 5px 10px;
+            text-align: center;
+        }
+        .typing-indicator {
+            display: flex;
+            gap: 4px;
+            padding: 10px;
+        }
+        .typing-dot {
+            width: 8px;
+            height: 8px;
+            background: #aaa;
+            border-radius: 50%;
+            animation: typing 1.4s infinite;
+        }
+        .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+        .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+        @keyframes typing {
+            0%, 60%, 100% { transform: translateY(0); }
+            30% { transform: translateY(-6px); }
+        }
+        .welcome-message {
+            text-align: center;
+            padding: 40px 20px;
+            color: #8b8b8b;
+        }
+        .welcome-message h2 {
+            color: #ececf1;
+            margin-bottom: 10px;
+        }
+        .examples {
+            margin-top: 30px;
+            text-align: left;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+        .example-item {
+            background: #40414f;
+            padding: 12px 16px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            color: #aaa;
+            font-size: 14px;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .example-item:hover {
+            background: #4a4a5a;
+            color: #fff;
+        }
+        @media (max-width: 768px) {
+            .sidebar { display: none; }
+            .message-content { max-width: 85%; }
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🤖 智能助手</h1>
+        <div class="status-bar">
+            <div class="status-item"><span class="status-dot"></span>记忆已启用</div>
+            <div class="status-item" id="toolCount">工具: 3个</div>
+        </div>
+    </div>
+
+    <div class="main-container">
+        <div class="sidebar">
+            <div class="sidebar-section">
+                <div class="sidebar-title">可用工具</div>
+                <ul class="tool-list">
+                    <li class="tool-item">🌤️ 天气查询</li>
+                    <li class="tool-item">🧮 计算器</li>
+                    <li class="tool-item">🕐 当前时间</li>
+                </ul>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">会话信息</div>
+                <div class="session-info" id="sessionInfo">会话ID: 未创建</div>
+            </div>
+        </div>
+
+        <div class="chat-area">
+            <div class="messages" id="messages">
+                <div class="welcome-message">
+                    <h2>你好！我是智能助手</h2>
+                    <p>我可以帮你查询天气、计算数学题、获取当前时间等</p>
+                    <div class="examples">
+                        <div class="example-item" onclick="sendExample('北京天气怎么样？')">北京天气怎么样？</div>
+                        <div class="example-item" onclick="sendExample('帮我计算 25 * 17 等于多少')">25 * 17 等于多少？</div>
+                        <div class="example-item" onclick="sendExample('现在几点了？')">现在几点了？</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="input-area">
+                <div class="action-buttons">
+                    <button class="action-btn" onclick="testRemoteCall()">🧪 测试远程调用</button>
+                    <button class="action-btn" onclick="clearChat()">🗑️ 清除对话</button>
+                    <button class="action-btn" onclick="copySessionId()">📋 复制会话ID</button>
+                </div>
+                <div class="input-container">
+                    <input type="text" class="input-box" id="messageInput" placeholder="输入消息... (回车发送)" onkeypress="handleKeyPress(event)">
+                    <button class="send-btn" id="sendBtn" onclick="sendMessage()">发送</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_KEY = 'ms-c82ae55c-bd9a-4d3f-8c16-d1947bfb725e';
+        let sessionId = localStorage.getItem('agent_session_id') || null;
+        let isLoading = false;
+
+        if (sessionId) {
+            document.getElementById('sessionInfo').textContent = `会话ID: ${sessionId.substring(0, 8)}...`;
+        }
+
+        async function sendMessage() {
+            if (isLoading) return;
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+            if (!message) return;
+
+            input.value = '';
+            addMessageToUI('user', message);
+            showTypingIndicator();
+            isLoading = true;
+            document.getElementById('sendBtn').disabled = true;
+
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: message,
+                        session_id: sessionId,
+                        api_key: API_KEY
+                    })
+                });
+
+                if (!response.ok) {
+                    throw new Error(`HTTP ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                sessionId = data.session_id;
+                localStorage.setItem('agent_session_id', sessionId);
+                document.getElementById('sessionInfo').textContent = `会话ID: ${sessionId.substring(0, 8)}...`;
+
+                hideTypingIndicator();
+                addMessageToUI('assistant', data.response, data.tool_used);
+            } catch (error) {
+                hideTypingIndicator();
+                addMessageToUI('assistant', `错误: ${error.message}，请检查服务器是否运行`);
+            } finally {
+                isLoading = false;
+                document.getElementById('sendBtn').disabled = false;
+            }
+        }
+
+        function addMessageToUI(role, content, toolUsed = null) {
+            const messagesDiv = document.getElementById('messages');
+            const welcome = messagesDiv.querySelector('.welcome-message');
+            if (welcome) welcome.remove();
+
+            const msgDiv = document.createElement('div');
+            msgDiv.className = `message ${role}`;
+
+            const avatar = role === 'assistant' ? '🤖' : '👤';
+
+            let toolBadge = '';
+            if (toolUsed) {
+                const toolNames = { get_weather: '🌤️ 天气', calculate: '🧮 计算', get_current_time: '🕐 时间' };
+                toolBadge = `<span class="tool-badge">${toolNames[toolUsed] || toolUsed}</span>`;
+            }
+
+            msgDiv.innerHTML = `
+                <div class="message-avatar">${avatar}</div>
+                <div class="message-content">${escapeHtml(content)}${toolBadge}</div>
+            `;
+
+            messagesDiv.appendChild(msgDiv);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function showTypingIndicator() {
+            const messagesDiv = document.getElementById('messages');
+            const indicator = document.createElement('div');
+            indicator.className = 'message assistant';
+            indicator.id = 'typingIndicator';
+            indicator.innerHTML = `
+                <div class="message-avatar">🤖</div>
+                <div class="message-content">
+                    <div class="typing-indicator">
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                        <div class="typing-dot"></div>
+                    </div>
+                </div>
+            `;
+            messagesDiv.appendChild(indicator);
+            messagesDiv.scrollTop = messagesDiv.scrollHeight;
+        }
+
+        function hideTypingIndicator() {
+            const indicator = document.getElementById('typingIndicator');
+            if (indicator) indicator.remove();
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        function sendExample(message) {
+            document.getElementById('messageInput').value = message;
+            sendMessage();
+        }
+
+        async function testRemoteCall() {
+            const testMessage = '你好，这是来自网页端的远程调用测试';
+            try {
+                const response = await fetch('/chat', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({
+                        message: testMessage,
+                        session_id: sessionId,
+                        api_key: API_KEY
+                    })
+                });
+                const data = await response.json();
+                alert(`远程调用成功！\n会话ID: ${data.session_id}\n回复: ${data.response}`);
+            } catch (error) {
+                alert(`远程调用失败: ${error.message}`);
+            }
+        }
+
+        function clearChat() {
+            const messagesDiv = document.getElementById('messages');
+            messagesDiv.innerHTML = `
+                <div class="welcome-message">
+                    <h2>对话已清除</h2>
+                    <p>开始新的对话吧！</p>
+                </div>
+            `;
+            sessionId = null;
+            localStorage.removeItem('agent_session_id');
+            document.getElementById('sessionInfo').textContent = '会话ID: 未创建';
+        }
+
+        function copySessionId() {
+            if (sessionId) {
+                navigator.clipboard.writeText(sessionId);
+                alert('会话ID已复制到剪贴板');
+            } else {
+                alert('暂无会话ID');
+            }
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text;
+            return div.innerHTML;
+        }
+    </script>
+</body>
+</html>
